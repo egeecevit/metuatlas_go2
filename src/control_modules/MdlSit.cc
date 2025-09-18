@@ -63,6 +63,10 @@ bool MdlSit::_wait_done(double t) {
   return (t - _mark > 3);
 }
 
+bool MdlSit::_sit_done(double t) {
+  return (t - _mark > 10);
+}
+
 bool MdlSit::_transition_done(double t) {
   return (t - _mark > 7);
 }
