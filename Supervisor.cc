@@ -15,7 +15,7 @@
 #include "rtclient/WriteRaw.hh"
 #include "rtclient/WriteML.hh"
 
-#include "quadruped/MdlDrawSquare.hh"
+#include "control_modules/MdlSit.hh"
 
 #include "Supervisor.hh"
 
@@ -155,8 +155,14 @@ void Supervisor::init() {
   // LogClient does not do its own enet initialization, so we must do it here
   rtclient::enet_initialize();
 
+  MdlSit *SitModule = new MdlSit();
+  _mgr->addModule(SitModule, 1, 0, USER_CONTROLLERS);
+
   _logserver = (LogServer*) _mgr->findModule(LOGSERVER_NAME, 0);
-  _wm = (MdlDrawSquare*) _mgr->findModule(WALKMODULE_NAME, 0);
+  _wm = (MdlSit*) _mgr->findModule(SITMODULE_NAME, 0);
+  if (_wm == nullptr) {
+    _mgr->warning("Supervisor", "Failed to find module %s", SITMODULE_NAME);
+  }
 
   ConfigTable config;
   bool hasConfig = _mgr->getConfigTable("supervisor", config);
@@ -215,6 +221,13 @@ void Supervisor::init() {
 
 void Supervisor::uninit() {
   DBGPRINT("Supervisor::uninit\n");
+
+  if (_wm) {
+    _mgr->deactivateModule(_wm);
+    _mgr->removeModule(_wm);
+    delete _wm;
+    _wm = nullptr;
+  }
 
   terminate();
 }

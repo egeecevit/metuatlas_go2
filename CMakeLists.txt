@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "install prefix" FORCE)
+endif()
+
 if ( "$ENV{RTROBOT_DIR}" STREQUAL "")
   message( FATAL_ERROR "Please set RTROBOT_DIR environment variable.")
 else ()
@@ -32,13 +36,14 @@ message(${CMAKE_CXX_FLAGS})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(EIGEN3 REQUIRED eigen3)
 include_directories(${EIGEN3_INCLUDE_DIRS})
+include_directories(${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
 
 set(SOURCES main.cc Supervisor.cc)
 
 if (${COMPILE_ROBOT})
   set(ROBOTEXE robot)
   add_executable(${ROBOTEXE} ${SOURCES})
-  target_link_libraries(${ROBOTEXE} robothw quadruped rtcore rtclient)
+  target_link_libraries(${ROBOTEXE} robothw quadruped control_modules rtcore rtclient)
 endif()
 
 if(${COMPILE_SIMULATION})
@@ -61,5 +66,7 @@ if(${COMPILE_SIMULATION})
   
   target_compile_options(${SIMEXE} PUBLIC ${MUJOCO_SAMPLE_COMPILE_OPTIONS}) 
   target_link_options(${SIMEXE} PRIVATE ${MUJOCO_SAMPLE_LINK_OPTIONS})
-  target_link_libraries(${SIMEXE} mujocohw quadruped rtcore rtclient mujoco::mujoco glfw Threads::Threads)
+  target_link_libraries(${SIMEXE} mujocohw quadruped control_modules rtcore rtclient mujoco::mujoco glfw Threads::Threads)
+
+  add_subdirectory(src/control_modules)
 endif()

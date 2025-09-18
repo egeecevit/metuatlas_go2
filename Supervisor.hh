@@ -16,7 +16,7 @@
 #include "rtclient/LogClient.hh"
 #include "rtclient/LogWriter.hh"
 
-class MdlDrawSquare;
+class MdlSit;
 
 /** \brief Top-level supervisor module for quadruped control
 
@@ -56,7 +56,7 @@ private:
   /** \brief Current state */
   int _state = S_INIT;
   
-  MdlDrawSquare *_wm = nullptr;
+  MdlSit *_wm = nullptr;
   double _mark = 0; // Temporary variable to store time of state transitions
   double _last_print = 0; // Track last time we printed the current time
   double _exitTime = 0;   // Exit ModuleManager main loop after this much time
