@@ -63,10 +63,6 @@ bool MdlSit::_wait_done(double t) {
   return (t - _mark > 3);
 }
 
-bool MdlSit::_sit_done(double t) {
-  return (t - _mark > 10);
-}
-
 bool MdlSit::_transition_done(double t) {
   return (t - _mark > 7);
 }
@@ -136,9 +132,9 @@ void MdlSit::_computeProfile() {
 void MdlSit::_setTargetAngle() {
   for (int i = 0; i < 4; i++) {
     // Sitting joint angles (in radians)
-    _footsitangle[i][0] = 0.5 * (i % 2 == 0 ? 1 : 1);  // Hip abduction: spread legs for stability
-    _footsitangle[i][1] = 1.2;   // Hip flexion: bend hip forward significantly
-    _footsitangle[i][2] = -2.7;  // Knee: bend knee to fold leg under body
+    _footsitangle[i][0] = 0.3 * (i % 2 == 0 ? 1 : 1);  // Hip abduction: spread legs for stability
+    _footsitangle[i][1] = 0.9;   // Hip flexion: bend hip forward significantly
+    _footsitangle[i][2] = -2.5;  // Knee: bend knee to fold leg under body
     
     _footsitangledot[i] = Eigen::Vector3d::Zero();  // No velocity
   }
