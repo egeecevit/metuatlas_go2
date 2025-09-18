@@ -31,8 +31,11 @@ void MdlSit::init() {
   _kinematics = new QuadrupedKinematics(createGo2Config());
 
   for (int i = 0; i < 3; i++){
-    _profiler[i] = new Profiler();
+    for (int j = 0; j < 4; j++){
+      _profiler[i][j] = new Profiler();
+    }
   }
+
 }
 
 void MdlSit::uninit() {
@@ -61,11 +64,11 @@ bool MdlSit::_wait_done(double t) {
 }
 
 bool MdlSit::_sit_done(double t) {
-  return (t - _mark > 7);
+  return (t - _mark > 10);
 }
 
 bool MdlSit::_transition_done(double t) {
-  return (t - _mark > 4);
+  return (t - _mark > 7);
 }
 
 void MdlSit::_wait_entry() {
@@ -76,12 +79,33 @@ void MdlSit::_wait_during() {
   _sendTarget();
 }
 
-void MdlSit::_wait_exit() {}
+void MdlSit::_wait_exit() {
+  _setTargetAngle();
+  _fangle.push_back(Eigen::Vector3d(_footsitangle[0][0], _footsitangle[0][1], _footsitangle[0][2]));
+  _fangle.push_back(Eigen::Vector3d(_footsitangle[1][0], _footsitangle[1][1], _footsitangle[1][2]));
+  _fangle.push_back(Eigen::Vector3d(_footsitangle[2][0], _footsitangle[2][1], _footsitangle[2][2]));
+  _fangle.push_back(Eigen::Vector3d(_footsitangle[3][0], _footsitangle[3][1], _footsitangle[3][2]));
+  _getCurrentAngles();
+  DBGPRINT("current angles are obtained");
+}
 
-// implement transition methods here
-void MdlSit::_transition_entry() {}
 
-void MdlSit::_transition_during() {}
+void MdlSit::_transition_entry() {
+  _mark = _mgr->readTime();
+
+  for (int j = 0; j < 4; j++){
+    for (int i = 0; i < 3; i++) {
+      _profiler[i][j]->clear();
+      _profiler[i][j]->add(0.0, _current_angles[j][i]);
+      _profiler[i][j]->add(7.0, _fangle[j][i]);
+    }
+  }
+}
+
+void MdlSit::_transition_during() {
+  _computeProfile();
+  _sendTargetAngle();
+}
 
 void MdlSit::_transition_exit() {}
 
@@ -96,10 +120,23 @@ void MdlSit::_sit_during() {
 void MdlSit::_sit_exit() {}
 
 
+void MdlSit::_computeProfile() {
+  double t = _mgr->readTime();
+
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 4; j++) {
+      Profiler::fval_t val;
+      _profiler[i][j]->value(t - _mark, val);
+      _footsitangle[j][i] = val.v;
+      _footsitangledot[j][i] = val.d;
+    }
+  }
+}
+
 void MdlSit::_setTargetAngle() {
   for (int i = 0; i < 4; i++) {
     // Sitting joint angles (in radians)
-    _footsitangle[i][0] = 0.5 * (i % 2 == 0 ? 1 : -1);  // Hip abduction: spread legs for stability
+    _footsitangle[i][0] = 0.5 * (i % 2 == 0 ? 1 : 1);  // Hip abduction: spread legs for stability
     _footsitangle[i][1] = 1.2;   // Hip flexion: bend hip forward significantly
     _footsitangle[i][2] = -2.7;  // Knee: bend knee to fold leg under body
     
@@ -125,6 +162,18 @@ void MdlSit::_setTargetInit() {
     _footpos[i][1] += _origin[1] * (i % 2 == 0 ? 1 : -1);
     _footpos[i][2] += _origin[2];
     // This for loop initializes leg positions according to the kinematics so that it will stand upright initially
+  }
+}
+
+void MdlSit::_getCurrentAngles() {
+
+  const Eigen::Vector3d current_fpos[4] = {
+    _footpos[0], _footpos[1], _footpos[2], _footpos[3]
+  };
+
+  for (int i = 0; i < 4; i ++) {
+    if (_kinematics->inverseKinematics(i, current_fpos[i], _current_angles[i])){
+    }
   }
 }
 
